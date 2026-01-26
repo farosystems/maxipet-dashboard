@@ -127,7 +127,7 @@ export function ConfiguracionWebComponent({
     })
   }
 
-  const handleImageUpload = async (field: 'banner_1' | 'banner_2' | 'banner_3', file: File) => {
+  const handleImageUpload = async (field: 'banner_1' | 'banner_2' | 'banner_3' | 'logo_url', file: File) => {
     try {
       setIsLoading(true)
 
@@ -138,8 +138,10 @@ export function ConfiguracionWebComponent({
       }
 
       const fileExt = file.name.split('.').pop()
-      const fileName = `banner-${Date.now()}.${fileExt}`
-      const filePath = `banners/${fileName}`
+      const prefix = field === 'logo_url' ? 'logo' : 'banner'
+      const folder = field === 'logo_url' ? 'logos' : 'banners'
+      const fileName = `${prefix}-${Date.now()}.${fileExt}`
+      const filePath = `${folder}/${fileName}`
 
       // Subir a Supabase Storage
       const { data, error } = await supabase.storage
@@ -212,55 +214,78 @@ export function ConfiguracionWebComponent({
                   <Upload className="h-4 w-4" />
                   <h3 className="text-lg font-semibold">Logo</h3>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="md:col-span-3">
-                    <Label htmlFor="logo_url">URL del Logo</Label>
-                    <Input
-                      id="logo_url"
-                      value={formData.logo_url}
-                      onChange={(e) => handleInputChange('logo_url', e.target.value)}
-                      placeholder="https://ejemplo.com/logo.png"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="logo_width">Ancho (px)</Label>
-                    <Input
-                      id="logo_width"
-                      type="number"
-                      value={formData.logo_width}
-                      onChange={(e) => handleInputChange('logo_width', parseInt(e.target.value) || 0)}
-                      min={50}
-                      max={500}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="logo_height">Alto (px)</Label>
-                    <Input
-                      id="logo_height"
-                      type="number"
-                      value={formData.logo_height}
-                      onChange={(e) => handleInputChange('logo_height', parseInt(e.target.value) || 0)}
-                      min={20}
-                      max={200}
-                    />
-                  </div>
-                  <div className="flex items-center justify-center border rounded-lg p-4">
-                    {formData.logo_url ? (
-                      <img 
-                        src={formData.logo_url} 
-                        alt="Vista previa del logo"
-                        style={{
-                          width: `${Math.min(formData.logo_width, 100)}px`,
-                          height: `${Math.min(formData.logo_height, 50)}px`,
-                          objectFit: 'contain'
-                        }}
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none'
-                        }}
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="md:col-span-3">
+                      <Label htmlFor="logo_url">URL del Logo</Label>
+                      <Input
+                        id="logo_url"
+                        value={formData.logo_url}
+                        onChange={(e) => handleInputChange('logo_url', e.target.value)}
+                        placeholder="https://ejemplo.com/logo.png o subir desde PC"
                       />
-                    ) : (
-                      <span className="text-gray-400 text-sm">Vista previa del logo</span>
-                    )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="logo_file">O subir logo desde PC</Label>
+                    <Input
+                      id="logo_file"
+                      type="file"
+                      accept="image/*"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0]
+                        if (file) {
+                          await handleImageUpload('logo_url', file)
+                          // Reset the input after upload
+                          e.target.value = ''
+                        }
+                      }}
+                    />
+                    <p className="text-xs text-gray-500">Formatos: JPG, PNG, GIF, WEBP (Máx. 5MB)</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="logo_width">Ancho (px)</Label>
+                      <Input
+                        id="logo_width"
+                        type="number"
+                        value={formData.logo_width}
+                        onChange={(e) => handleInputChange('logo_width', parseInt(e.target.value) || 0)}
+                        min={50}
+                        max={500}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="logo_height">Alto (px)</Label>
+                      <Input
+                        id="logo_height"
+                        type="number"
+                        value={formData.logo_height}
+                        onChange={(e) => handleInputChange('logo_height', parseInt(e.target.value) || 0)}
+                        min={20}
+                        max={200}
+                      />
+                    </div>
+                    <div className="flex items-center justify-center border rounded-lg p-4">
+                      {formData.logo_url ? (
+                        <img
+                          src={formData.logo_url}
+                          alt="Vista previa del logo"
+                          style={{
+                            width: `${Math.min(formData.logo_width, 100)}px`,
+                            height: `${Math.min(formData.logo_height, 50)}px`,
+                            objectFit: 'contain'
+                          }}
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none'
+                          }}
+                        />
+                      ) : (
+                        <span className="text-gray-400 text-sm">Vista previa del logo</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -604,6 +629,8 @@ export function ConfiguracionWebComponent({
                           const file = e.target.files?.[0]
                           if (file) {
                             await handleImageUpload('banner_1', file)
+                            // Reset the input after upload
+                            e.target.value = ''
                           }
                         }}
                       />
@@ -664,6 +691,8 @@ export function ConfiguracionWebComponent({
                           const file = e.target.files?.[0]
                           if (file) {
                             await handleImageUpload('banner_2', file)
+                            // Reset the input after upload
+                            e.target.value = ''
                           }
                         }}
                       />
@@ -724,6 +753,8 @@ export function ConfiguracionWebComponent({
                           const file = e.target.files?.[0]
                           if (file) {
                             await handleImageUpload('banner_3', file)
+                            // Reset the input after upload
+                            e.target.value = ''
                           }
                         }}
                       />

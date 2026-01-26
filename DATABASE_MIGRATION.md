@@ -1,4 +1,4 @@
-# 📊 Esquema Completo de Base de Datos - Catálogo Sur Importaciones
+# 📊 Esquema Completo de Base de Datos - Catálogo MaxiPet
 
 Este documento contiene toda la información necesaria para migrar y recrear la base de datos completa del sistema de catálogo y financiación.
 

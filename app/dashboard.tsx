@@ -315,7 +315,7 @@ function Dashboard() {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem className="hidden md:block">
-                <BreadcrumbLink href="#dashboard">Sur Importaciones Admin</BreadcrumbLink>
+                <BreadcrumbLink href="#dashboard">MaxiPet Admin</BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator className="hidden md:block" />
               <BreadcrumbItem>

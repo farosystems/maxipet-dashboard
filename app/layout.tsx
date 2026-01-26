@@ -5,8 +5,8 @@ import './globals.css'
 import { ClerkProvider } from '@clerk/nextjs'
 
 export const metadata: Metadata = {
-  title: 'Sur Importaciones Admin',
-  description: 'Panel de administración para el catálogo de Sur Importaciones',
+  title: 'MaxiPet Admin',
+  description: 'Panel de administración para el catálogo de MaxiPet',
   generator: 'v0.dev',
   icons: {
     icon: '/logo.png',
