@@ -50,6 +50,7 @@ export const ProductosSection = React.memo(({
   const [filterCategoria, setFilterCategoria] = useState("all")
   const [filterMarca, setFilterMarca] = useState("all")
   const [filterEstado, setFilterEstado] = useState("all")
+  const [filterImagen, setFilterImagen] = useState("all")
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
   const itemsPerPage = 15
@@ -70,12 +71,19 @@ export const ProductosSection = React.memo(({
     precio_oferta: "",
     descuento_porcentual: "",
     fecha_vigencia_desde: "",
-    fecha_vigencia_hasta: ""
+    fecha_vigencia_hasta: "",
+    kilos: "",
+    tamaño: ""
   })
   const [currentColor, setCurrentColor] = useState("#000000")
   const [currentColorCode, setCurrentColorCode] = useState("")
   const [selectedProducts, setSelectedProducts] = useState<Set<number>>(new Set())
   const [isExporting, setIsExporting] = useState(false)
+  const [isAssignKilosDialogOpen, setIsAssignKilosDialogOpen] = useState(false)
+  const [isAssignTamañoDialogOpen, setIsAssignTamañoDialogOpen] = useState(false)
+  const [selectedKilos, setSelectedKilos] = useState<string>("")
+  const [selectedTamaño, setSelectedTamaño] = useState<string>("")
+  const [isAssigning, setIsAssigning] = useState(false)
 
   // Lógica de autocompletado para precio_oferta y descuento_porcentual
   const calcularPrecioOferta = useCallback((precioBase: number, descuento: number) => {
@@ -199,8 +207,21 @@ export const ProductosSection = React.memo(({
       filtered = filtered.filter(producto => producto.activo === isActive)
     }
 
+    // Filtro por imagen
+    if (filterImagen !== "all") {
+      if (filterImagen === "con_imagen") {
+        filtered = filtered.filter(producto =>
+          producto.imagen || producto.imagen_2 || producto.imagen_3 || producto.imagen_4 || producto.imagen_5
+        )
+      } else if (filterImagen === "sin_imagen") {
+        filtered = filtered.filter(producto =>
+          !producto.imagen && !producto.imagen_2 && !producto.imagen_3 && !producto.imagen_4 && !producto.imagen_5
+        )
+      }
+    }
+
     return filtered
-  }, [productos, searchTerm, filterCategoria, filterMarca, filterEstado])
+  }, [productos, searchTerm, filterCategoria, filterMarca, filterEstado, filterImagen])
 
   // Funciones de paginación
   const totalPages = Math.ceil(filteredProductos.length / itemsPerPage)
@@ -233,6 +254,74 @@ export const ProductosSection = React.memo(({
       }
       return newSet
     })
+  }
+
+  // Función para asignar kilos masivamente
+  const handleAssignKilos = async () => {
+    if (selectedProducts.size === 0) {
+      alert('Por favor selecciona al menos un producto')
+      return
+    }
+
+    if (!selectedKilos || selectedKilos === "none") {
+      alert('Por favor selecciona un valor de kilos')
+      return
+    }
+
+    setIsAssigning(true)
+    try {
+      const productosAActualizar = Array.from(selectedProducts)
+
+      for (const productoId of productosAActualizar) {
+        await onUpdateProducto(productoId, {
+          kilos: selectedKilos === "none" ? undefined : parseFloat(selectedKilos)
+        })
+      }
+
+      alert(`Kilos asignado correctamente a ${productosAActualizar.length} producto(s)`)
+      setIsAssignKilosDialogOpen(false)
+      setSelectedKilos("")
+      setSelectedProducts(new Set())
+    } catch (error) {
+      console.error('Error asignando kilos:', error)
+      alert('Error al asignar kilos a los productos')
+    } finally {
+      setIsAssigning(false)
+    }
+  }
+
+  // Función para asignar tamaño masivamente
+  const handleAssignTamaño = async () => {
+    if (selectedProducts.size === 0) {
+      alert('Por favor selecciona al menos un producto')
+      return
+    }
+
+    if (!selectedTamaño || selectedTamaño === "none") {
+      alert('Por favor selecciona un tamaño')
+      return
+    }
+
+    setIsAssigning(true)
+    try {
+      const productosAActualizar = Array.from(selectedProducts)
+
+      for (const productoId of productosAActualizar) {
+        await onUpdateProducto(productoId, {
+          tamaño: selectedTamaño === "none" ? undefined : selectedTamaño
+        })
+      }
+
+      alert(`Tamaño asignado correctamente a ${productosAActualizar.length} producto(s)`)
+      setIsAssignTamañoDialogOpen(false)
+      setSelectedTamaño("")
+      setSelectedProducts(new Set())
+    } catch (error) {
+      console.error('Error asignando tamaño:', error)
+      alert('Error al asignar tamaño a los productos')
+    } finally {
+      setIsAssigning(false)
+    }
   }
 
   // Función de exportación a Excel
@@ -282,7 +371,7 @@ export const ProductosSection = React.memo(({
   // Resetear página cuando cambie la vista, el número de productos, el término de búsqueda o los filtros
   useEffect(() => {
     setCurrentPage(1)
-  }, [viewMode, filteredProductos.length, searchTerm, filterCategoria, filterMarca, filterEstado])
+  }, [viewMode, filteredProductos.length, searchTerm, filterCategoria, filterMarca, filterEstado, filterImagen])
 
   // Limpiar timer al desmontar
   useEffect(() => {
@@ -502,7 +591,9 @@ export const ProductosSection = React.memo(({
       precio_oferta: "",
       descuento_porcentual: "",
       fecha_vigencia_desde: "",
-      fecha_vigencia_hasta: ""
+      fecha_vigencia_hasta: "",
+      kilos: "",
+      tamaño: ""
     })
     setEditingProduct(null)
     setCurrentImageIndex(0)
@@ -538,7 +629,9 @@ export const ProductosSection = React.memo(({
       precio_oferta: (producto as any).precio_oferta?.toString() || "",
       descuento_porcentual: (producto as any).descuento_porcentual?.toString() || "",
       fecha_vigencia_desde: (producto as any).fecha_vigencia_desde || "",
-      fecha_vigencia_hasta: (producto as any).fecha_vigencia_hasta || ""
+      fecha_vigencia_hasta: (producto as any).fecha_vigencia_hasta || "",
+      kilos: (producto as any).kilos?.toString() || "",
+      tamaño: (producto as any).tamaño || ""
     })
     setCurrentImageIndex(0)
     setTimeout(() => {
@@ -621,7 +714,9 @@ export const ProductosSection = React.memo(({
         precio_oferta: formData.precio_oferta ? parseFloat(formData.precio_oferta) : undefined,
         descuento_porcentual: formData.descuento_porcentual ? parseFloat(formData.descuento_porcentual) : undefined,
         fecha_vigencia_desde: formData.fecha_vigencia_desde || undefined,
-        fecha_vigencia_hasta: formData.fecha_vigencia_hasta || undefined
+        fecha_vigencia_hasta: formData.fecha_vigencia_hasta || undefined,
+        kilos: formData.kilos ? parseFloat(formData.kilos) : undefined,
+        tamaño: formData.tamaño || undefined
       }
 
       console.log('Guardando producto con imágenes:', {
@@ -823,16 +918,34 @@ export const ProductosSection = React.memo(({
             </Button>
           </div>
               {selectedProducts.size > 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleExportToExcel}
-                  disabled={isExporting}
-                  className="bg-green-50 hover:bg-green-100 text-green-700 border-green-300"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  {isExporting ? "Exportando..." : `Exportar (${selectedProducts.size})`}
-                </Button>
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsAssignKilosDialogOpen(true)}
+                    className="bg-orange-50 hover:bg-orange-100 text-orange-700 border-orange-300"
+                  >
+                    Asignar Kilos ({selectedProducts.size})
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsAssignTamañoDialogOpen(true)}
+                    className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-300"
+                  >
+                    Asignar Tamaño ({selectedProducts.size})
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExportToExcel}
+                    disabled={isExporting}
+                    className="bg-green-50 hover:bg-green-100 text-green-700 border-green-300"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    {isExporting ? "Exportando..." : `Exportar (${selectedProducts.size})`}
+                  </Button>
+                </>
               )}
               <ImageImporter productos={productos} onUpdateProducto={onUpdateProducto} />
               <CodigoMigrator 
@@ -923,6 +1036,51 @@ export const ProductosSection = React.memo(({
                     required
                     disabled={isCreating}
                   />
+                </div>
+              </div>
+
+              {/* Campos de Kilos y Tamaño */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="kilos">Kilos</Label>
+                  <Select
+                    value={formData.kilos || "none"}
+                    onValueChange={(value) => setFormData({ ...formData, kilos: value === "none" ? "" : value })}
+                    disabled={isCreating}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar kilos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Sin especificar</SelectItem>
+                      <SelectItem value="1">1 Kg</SelectItem>
+                      <SelectItem value="3">3 Kg</SelectItem>
+                      <SelectItem value="5">5 Kg</SelectItem>
+                      <SelectItem value="7">7 Kg</SelectItem>
+                      <SelectItem value="10">10 Kg</SelectItem>
+                      <SelectItem value="15">15 Kg</SelectItem>
+                      <SelectItem value="20">20 Kg</SelectItem>
+                      <SelectItem value="25">25 Kg</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="tamaño">Tamaño</Label>
+                  <Select
+                    value={formData.tamaño || "none"}
+                    onValueChange={(value) => setFormData({ ...formData, tamaño: value === "none" ? "" : value })}
+                    disabled={isCreating}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar tamaño" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Sin especificar</SelectItem>
+                      <SelectItem value="Pequeño">Pequeño</SelectItem>
+                      <SelectItem value="Mediano">Mediano</SelectItem>
+                      <SelectItem value="Adulto">Adulto</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
@@ -1600,6 +1758,17 @@ export const ProductosSection = React.memo(({
                   <SelectItem value="inactivo">Inactivo</SelectItem>
                 </SelectContent>
               </Select>
+
+              <Select value={filterImagen} onValueChange={setFilterImagen}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Imagen" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  <SelectItem value="con_imagen">Con imagen</SelectItem>
+                  <SelectItem value="sin_imagen">Sin imagen</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>
@@ -1624,6 +1793,8 @@ export const ProductosSection = React.memo(({
               <TableHead>Imágenes</TableHead>
               <TableHead>Categoría</TableHead>
               <TableHead>Marca</TableHead>
+              <TableHead>Kilos</TableHead>
+              <TableHead>Tamaño</TableHead>
               <TableHead>Precio</TableHead>
               <TableHead>Precio Oferta</TableHead>
               <TableHead>Descuento</TableHead>
@@ -1705,6 +1876,22 @@ export const ProductosSection = React.memo(({
                   </TableCell>
                   <TableCell>{producto.categoria?.descripcion || '-'}</TableCell>
                   <TableCell>{producto.marca?.descripcion || '-'}</TableCell>
+                  <TableCell>
+                    {(producto as any).kilos ? (
+                      <span className="text-sm">{(producto as any).kilos} Kg</span>
+                    ) : (
+                      <span className="text-gray-400 text-xs">-</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {(producto as any).tamaño ? (
+                      <span className="px-2 py-1 rounded text-xs bg-indigo-100 text-indigo-800">
+                        {(producto as any).tamaño}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400 text-xs">-</span>
+                    )}
+                  </TableCell>
                   <TableCell>{formatPrice(producto.precio)}</TableCell>
                   <TableCell>
                     {(producto as any).precio_oferta ? (
@@ -1867,7 +2054,7 @@ export const ProductosSection = React.memo(({
                     <div className="text-lg font-bold text-green-600">
                       {formatPrice(producto.precio)}
                     </div>
-                    
+
                     <div className="flex flex-wrap gap-1 text-xs">
                       {producto.categoria && (
                         <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
@@ -1877,6 +2064,16 @@ export const ProductosSection = React.memo(({
                       {producto.marca && (
                         <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded">
                           {producto.marca.descripcion}
+                        </span>
+                      )}
+                      {(producto as any).kilos && (
+                        <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded">
+                          {(producto as any).kilos} Kg
+                        </span>
+                      )}
+                      {(producto as any).tamaño && (
+                        <span className="bg-indigo-100 text-indigo-800 px-2 py-1 rounded">
+                          {(producto as any).tamaño}
                         </span>
                       )}
                     </div>
@@ -1994,6 +2191,117 @@ export const ProductosSection = React.memo(({
             >
               Eliminar
             </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+
+    {/* Diálogo para asignar kilos */}
+    <Dialog open={isAssignKilosDialogOpen} onOpenChange={setIsAssignKilosDialogOpen}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Asignar Kilos a Productos Seleccionados</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">
+            Se asignará el valor seleccionado a {selectedProducts.size} producto(s)
+          </p>
+
+          <div>
+            <Label htmlFor="assign-kilos">Seleccionar Kilos</Label>
+            <Select
+              value={selectedKilos || "none"}
+              onValueChange={setSelectedKilos}
+              disabled={isAssigning}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar kilos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Sin especificar</SelectItem>
+                <SelectItem value="1">1 Kg</SelectItem>
+                <SelectItem value="3">3 Kg</SelectItem>
+                <SelectItem value="5">5 Kg</SelectItem>
+                <SelectItem value="7">7 Kg</SelectItem>
+                <SelectItem value="10">10 Kg</SelectItem>
+                <SelectItem value="15">15 Kg</SelectItem>
+                <SelectItem value="20">20 Kg</SelectItem>
+                <SelectItem value="25">25 Kg</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="flex justify-end space-x-2 pt-4">
+          <Button
+            variant="outline"
+            onClick={() => {
+              setIsAssignKilosDialogOpen(false)
+              setSelectedKilos("")
+            }}
+            disabled={isAssigning}
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleAssignKilos}
+            disabled={isAssigning || !selectedKilos || selectedKilos === "none"}
+          >
+            {isAssigning ? "Asignando..." : "Asignar"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+
+    {/* Diálogo para asignar tamaño */}
+    <Dialog open={isAssignTamañoDialogOpen} onOpenChange={setIsAssignTamañoDialogOpen}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Asignar Tamaño a Productos Seleccionados</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">
+            Se asignará el valor seleccionado a {selectedProducts.size} producto(s)
+          </p>
+
+          <div>
+            <Label htmlFor="assign-tamaño">Seleccionar Tamaño</Label>
+            <Select
+              value={selectedTamaño || "none"}
+              onValueChange={setSelectedTamaño}
+              disabled={isAssigning}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar tamaño" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Sin especificar</SelectItem>
+                <SelectItem value="Pequeño">Pequeño</SelectItem>
+                <SelectItem value="Mediano">Mediano</SelectItem>
+                <SelectItem value="Adulto">Adulto</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="flex justify-end space-x-2 pt-4">
+          <Button
+            variant="outline"
+            onClick={() => {
+              setIsAssignTamañoDialogOpen(false)
+              setSelectedTamaño("")
+            }}
+            disabled={isAssigning}
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleAssignTamaño}
+            disabled={isAssigning || !selectedTamaño || selectedTamaño === "none"}
+          >
+            {isAssigning ? "Asignando..." : "Asignar"}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

@@ -48,6 +48,8 @@ export interface Producto {
   aplica_todos_plan?: boolean
   aplica_solo_categoria?: boolean
   aplica_plan_especial?: boolean
+  kilos?: number
+  tamaño?: string
   fk_id_categoria?: number
   fk_id_marca?: number
   categoria?: Categoria

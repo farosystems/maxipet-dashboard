@@ -31,6 +31,8 @@ interface ProductoExcel {
   descuento_porcentual?: number
   fecha_vigencia_desde?: string
   fecha_vigencia_hasta?: string
+  kilos?: number
+  tamaño?: string
 }
 
 interface MigrationResult {
@@ -129,6 +131,8 @@ export const ExcelMigrator = ({ productos, categorias, marcas, lineas, onProduct
         "Agrupación": "Notebooks",
         "Marca": "HP",
         "Linea": "Tecnología",
+        "Kilos": "",
+        "Tamaño": "",
         aplica_todos_plan: true,
         descuento_porcentual: 10,
         precio_oferta: 135000.00,
@@ -136,15 +140,17 @@ export const ExcelMigrator = ({ productos, categorias, marcas, lineas, onProduct
         fecha_vigencia_hasta: "2025-12-31"
       },
       {
-        "Desc. artículo": "Ejemplo: Mouse Logitech",
-        "Precio": 5000.00,
-        "Artículo": "MS-LG-001",
-        "Agrupación": "Accesorios",
-        "Marca": "Logitech",
-        "Linea": "Tecnología",
+        "Desc. artículo": "Ejemplo: Alimento Perro Adulto",
+        "Precio": 35000.00,
+        "Artículo": "AL-DOG-015",
+        "Agrupación": "Alimentos",
+        "Marca": "Dog Chow",
+        "Linea": "Mascotas",
+        "Kilos": 15,
+        "Tamaño": "Adulto",
         aplica_todos_plan: false,
         descuento_porcentual: 15,
-        precio_oferta: 4250.00,
+        precio_oferta: 29750.00,
         fecha_vigencia_desde: "2025-11-15",
         fecha_vigencia_hasta: "2025-11-30"
       }
@@ -203,7 +209,10 @@ export const ExcelMigrator = ({ productos, categorias, marcas, lineas, onProduct
         precio_oferta: row.precio_oferta != null ? parseFloat(row.precio_oferta) : undefined,
         descuento_porcentual: row.descuento_porcentual != null ? parseFloat(row.descuento_porcentual) : undefined,
         fecha_vigencia_desde: parseExcelDate(row.fecha_vigencia_desde),
-        fecha_vigencia_hasta: parseExcelDate(row.fecha_vigencia_hasta)
+        fecha_vigencia_hasta: parseExcelDate(row.fecha_vigencia_hasta),
+        // Kilos y Tamaño
+        kilos: (row.kilos || row['Kilos']) ? parseFloat(row.kilos || row['Kilos']) : undefined,
+        tamaño: row.tamaño || row['Tamaño'] ? String(row.tamaño || row['Tamaño']).trim() : undefined
       }))
 
       setPreviewData(processedData.slice(0, 5)) // Mostrar solo las primeras 5 filas como preview
@@ -386,7 +395,10 @@ export const ExcelMigrator = ({ productos, categorias, marcas, lineas, onProduct
             precio_oferta: rowData.precio_oferta != null ? parseFloat(rowData.precio_oferta) : undefined,
             descuento_porcentual: rowData.descuento_porcentual != null ? parseFloat(rowData.descuento_porcentual) : undefined,
             fecha_vigencia_desde: parseExcelDate(rowData.fecha_vigencia_desde),
-            fecha_vigencia_hasta: parseExcelDate(rowData.fecha_vigencia_hasta)
+            fecha_vigencia_hasta: parseExcelDate(rowData.fecha_vigencia_hasta),
+            // Kilos y Tamaño
+            kilos: (rowData.kilos || rowData['Kilos']) ? parseFloat(rowData.kilos || rowData['Kilos']) : undefined,
+            tamaño: rowData.tamaño || rowData['Tamaño'] ? String(rowData.tamaño || rowData['Tamaño']).trim() : undefined
           }
 
           // Validaciones básicas
@@ -494,10 +506,18 @@ export const ExcelMigrator = ({ productos, categorias, marcas, lineas, onProduct
             const fechaHastaActual = (productoExistente as any).fecha_vigencia_hasta
             const fechaHastaNueva = productoData.fecha_vigencia_hasta
 
+            // Comparar kilos y tamaño
+            const kilosActual = (productoExistente as any).kilos
+            const kilosNuevo = productoData.kilos
+            const tamañoActual = (productoExistente as any).tamaño
+            const tamañoNuevo = productoData.tamaño
+
             const precioOfertaDiferente = precioOfertaActual !== precioOfertaNuevo
             const descuentoDiferente = descuentoActual !== descuentoNuevo
             const fechaDesdeDiferente = fechaDesdeActual !== fechaDesdeNueva
             const fechaHastaDiferente = fechaHastaActual !== fechaHastaNueva
+            const kilosDiferente = kilosActual !== kilosNuevo
+            const tamañoDiferente = tamañoActual !== tamañoNuevo
 
             console.log(`  - Descripción diferente: ${descripcionDiferente}`)
             console.log(`  - Precio diferente: ${precioDiferente}`)
@@ -506,9 +526,12 @@ export const ExcelMigrator = ({ productos, categorias, marcas, lineas, onProduct
             console.log(`  - Descuento diferente: ${descuentoDiferente}`)
             console.log(`  - Fecha desde diferente: ${fechaDesdeDiferente}`)
             console.log(`  - Fecha hasta diferente: ${fechaHastaDiferente}`)
+            console.log(`  - Kilos diferente: ${kilosDiferente}`)
+            console.log(`  - Tamaño diferente: ${tamañoDiferente}`)
 
             if (!descripcionDiferente && !precioDiferente && !categoriaDiferente &&
-                !precioOfertaDiferente && !descuentoDiferente && !fechaDesdeDiferente && !fechaHastaDiferente) {
+                !precioOfertaDiferente && !descuentoDiferente && !fechaDesdeDiferente && !fechaHastaDiferente &&
+                !kilosDiferente && !tamañoDiferente) {
               // Ningún campo es diferente, no hacer nada
               results.push({
                 row: rowNumber,
@@ -568,7 +591,19 @@ export const ExcelMigrator = ({ productos, categorias, marcas, lineas, onProduct
                   cambios.push(`vigencia hasta: ${fechaHastaActual || 'sin fecha'} → ${fechaHastaNueva || 'sin fecha'}`)
                   console.log(`🔄 Actualizando fecha hasta: ${fechaHastaActual} → ${fechaHastaNueva}`)
                 }
-                
+
+                if (kilosDiferente) {
+                  camposAActualizar.kilos = productoData.kilos
+                  cambios.push(`kilos: ${kilosActual || 'sin especificar'} → ${kilosNuevo || 'sin especificar'}`)
+                  console.log(`🔄 Actualizando kilos: ${kilosActual} → ${kilosNuevo}`)
+                }
+
+                if (tamañoDiferente) {
+                  camposAActualizar.tamaño = productoData.tamaño
+                  cambios.push(`tamaño: ${tamañoActual || 'sin especificar'} → ${tamañoNuevo || 'sin especificar'}`)
+                  console.log(`🔄 Actualizando tamaño: ${tamañoActual} → ${tamañoNuevo}`)
+                }
+
                 console.log(`🔄 Actualizando producto ${productoExistente.id} con cambios:`, camposAActualizar)
                 
                 const { error } = await supabase
@@ -643,7 +678,9 @@ export const ExcelMigrator = ({ productos, categorias, marcas, lineas, onProduct
             precio_oferta: productoData.precio_oferta,
             descuento_porcentual: productoData.descuento_porcentual,
             fecha_vigencia_desde: productoData.fecha_vigencia_desde,
-            fecha_vigencia_hasta: productoData.fecha_vigencia_hasta
+            fecha_vigencia_hasta: productoData.fecha_vigencia_hasta,
+            kilos: productoData.kilos,
+            tamaño: productoData.tamaño
           }
 
           console.log(`🆕 Creando producto:`, nuevoProducto)
@@ -774,6 +811,7 @@ export const ExcelMigrator = ({ productos, categorias, marcas, lineas, onProduct
             <ul className="text-sm text-blue-700 space-y-1">
               <li>• <strong>Columnas requeridas:</strong> descripción, precio, código, categoría, marca, línea, aplica_todos_plan</li>
               <li>• <strong>Columnas opcionales de promoción:</strong> descuento_porcentual, precio_oferta, fecha_vigencia_desde, fecha_vigencia_hasta</li>
+              <li>• <strong>Columnas opcionales de producto:</strong> Kilos (1, 3, 5, 7, 10, 15, 20, 25), Tamaño (Pequeño, Mediano, Adulto)</li>
               <li>• <strong>Nombres alternativos aceptados:</strong></li>
               <li>&nbsp;&nbsp;- Descripción: "descripcion" o "Desc. artículo"</li>
               <li>&nbsp;&nbsp;- Código: "codigo" o "Artículo"</li>
@@ -781,6 +819,8 @@ export const ExcelMigrator = ({ productos, categorias, marcas, lineas, onProduct
               <li>&nbsp;&nbsp;- Categoría: "categoria" o "Agrupación"</li>
               <li>&nbsp;&nbsp;- Marca: "marca" o "Marca"</li>
               <li>&nbsp;&nbsp;- Línea: "linea" o "Linea"</li>
+              <li>&nbsp;&nbsp;- Kilos: "kilos" o "Kilos"</li>
+              <li>&nbsp;&nbsp;- Tamaño: "tamaño" o "Tamaño"</li>
               <li>• <strong>Promociones:</strong> Puedes ingresar solo descuento_porcentual O solo precio_oferta. El otro valor se calculará automáticamente</li>
               <li>• <strong>Búsqueda inteligente:</strong> Primero busca por código, luego por descripción</li>
               <li>• <strong>Si encuentra por código:</strong>
