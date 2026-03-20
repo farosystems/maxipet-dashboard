@@ -51,6 +51,8 @@ export const ProductosSection = React.memo(({
   const [filterMarca, setFilterMarca] = useState("all")
   const [filterEstado, setFilterEstado] = useState("all")
   const [filterImagen, setFilterImagen] = useState("all")
+  const [filterKilos, setFilterKilos] = useState("all")
+  const [filterTamaño, setFilterTamaño] = useState("all")
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
   const itemsPerPage = 15
@@ -81,8 +83,10 @@ export const ProductosSection = React.memo(({
   const [isExporting, setIsExporting] = useState(false)
   const [isAssignKilosDialogOpen, setIsAssignKilosDialogOpen] = useState(false)
   const [isAssignTamañoDialogOpen, setIsAssignTamañoDialogOpen] = useState(false)
+  const [isAdjustPriceDialogOpen, setIsAdjustPriceDialogOpen] = useState(false)
   const [selectedKilos, setSelectedKilos] = useState<string>("")
   const [selectedTamaño, setSelectedTamaño] = useState<string>("")
+  const [priceAdjustmentPercentage, setPriceAdjustmentPercentage] = useState<string>("")
   const [isAssigning, setIsAssigning] = useState(false)
 
   // Lógica de autocompletado para precio_oferta y descuento_porcentual
@@ -220,8 +224,24 @@ export const ProductosSection = React.memo(({
       }
     }
 
+    // Filtro por kilos
+    if (filterKilos !== "all") {
+      filtered = filtered.filter(producto => {
+        const productoKilos = (producto as any).kilos
+        return productoKilos?.toString() === filterKilos
+      })
+    }
+
+    // Filtro por tamaño
+    if (filterTamaño !== "all") {
+      filtered = filtered.filter(producto => {
+        const productoTamaño = (producto as any).tamaño
+        return productoTamaño === filterTamaño
+      })
+    }
+
     return filtered
-  }, [productos, searchTerm, filterCategoria, filterMarca, filterEstado, filterImagen])
+  }, [productos, searchTerm, filterCategoria, filterMarca, filterEstado, filterImagen, filterKilos, filterTamaño])
 
   // Funciones de paginación
   const totalPages = Math.ceil(filteredProductos.length / itemsPerPage)
@@ -324,6 +344,67 @@ export const ProductosSection = React.memo(({
     }
   }
 
+  // Función para ajustar precios masivamente
+  const handleAdjustPrice = async () => {
+    if (selectedProducts.size === 0) {
+      alert('Por favor selecciona al menos un producto')
+      return
+    }
+
+    const percentage = parseFloat(priceAdjustmentPercentage)
+    if (isNaN(percentage) || percentage <= 0) {
+      alert('Por favor ingresa un porcentaje válido (mayor a 0)')
+      return
+    }
+
+    const confirmMessage = `¿Estás seguro de aumentar el precio en ${percentage}% a ${selectedProducts.size} producto(s)?`
+
+    if (!confirm(confirmMessage)) {
+      return
+    }
+
+    setIsAssigning(true)
+    try {
+      const productosAActualizar = Array.from(selectedProducts)
+      let actualizadosExitosamente = 0
+      let errores = 0
+
+      for (const productoId of productosAActualizar) {
+        const producto = productos.find(p => p.id === productoId)
+        if (producto && producto.precio) {
+          const precioActual = producto.precio
+          const factorAjuste = 1 + (percentage / 100)
+          const nuevoPrecio = Math.round(precioActual * factorAjuste * 100) / 100 // Redondear a 2 decimales
+
+          if (nuevoPrecio > 0) {
+            try {
+              await onUpdateProducto(productoId, {
+                precio: nuevoPrecio
+              })
+              actualizadosExitosamente++
+            } catch (err) {
+              console.error(`Error actualizando producto ${productoId}:`, err)
+              errores++
+            }
+          } else {
+            errores++
+          }
+        }
+      }
+
+      const mensaje = `Precios actualizados: ${actualizadosExitosamente} exitosos${errores > 0 ? `, ${errores} errores` : ''}`
+      alert(mensaje)
+      setIsAdjustPriceDialogOpen(false)
+      setPriceAdjustmentPercentage("")
+      setSelectedProducts(new Set())
+    } catch (error) {
+      console.error('Error ajustando precios:', error)
+      alert('Error al ajustar precios de los productos')
+    } finally {
+      setIsAssigning(false)
+    }
+  }
+
   // Función de exportación a Excel
   const handleExportToExcel = async () => {
     if (selectedProducts.size === 0) {
@@ -371,7 +452,7 @@ export const ProductosSection = React.memo(({
   // Resetear página cuando cambie la vista, el número de productos, el término de búsqueda o los filtros
   useEffect(() => {
     setCurrentPage(1)
-  }, [viewMode, filteredProductos.length, searchTerm, filterCategoria, filterMarca, filterEstado, filterImagen])
+  }, [viewMode, filteredProductos.length, searchTerm, filterCategoria, filterMarca, filterEstado, filterImagen, filterKilos, filterTamaño])
 
   // Limpiar timer al desmontar
   useEffect(() => {
@@ -938,6 +1019,14 @@ export const ProductosSection = React.memo(({
                   <Button
                     variant="outline"
                     size="sm"
+                    onClick={() => setIsAdjustPriceDialogOpen(true)}
+                    className="bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-300"
+                  >
+                    Aumentar Precio ({selectedProducts.size})
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={handleExportToExcel}
                     disabled={isExporting}
                     className="bg-green-50 hover:bg-green-100 text-green-700 border-green-300"
@@ -1054,9 +1143,13 @@ export const ProductosSection = React.memo(({
                     <SelectContent>
                       <SelectItem value="none">Sin especificar</SelectItem>
                       <SelectItem value="1">1 Kg</SelectItem>
+                      <SelectItem value="1.8">1.8 Kg</SelectItem>
                       <SelectItem value="3">3 Kg</SelectItem>
+                      <SelectItem value="3.6">3.6 Kg</SelectItem>
+                      <SelectItem value="4">4 Kg</SelectItem>
                       <SelectItem value="5">5 Kg</SelectItem>
                       <SelectItem value="7">7 Kg</SelectItem>
+                      <SelectItem value="7.5">7.5 Kg</SelectItem>
                       <SelectItem value="10">10 Kg</SelectItem>
                       <SelectItem value="15">15 Kg</SelectItem>
                       <SelectItem value="20">20 Kg</SelectItem>
@@ -1769,6 +1862,39 @@ export const ProductosSection = React.memo(({
                   <SelectItem value="sin_imagen">Sin imagen</SelectItem>
                 </SelectContent>
               </Select>
+
+              <Select value={filterKilos} onValueChange={setFilterKilos}>
+                <SelectTrigger className="w-32">
+                  <SelectValue placeholder="Kilos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="1">1 Kg</SelectItem>
+                  <SelectItem value="1.8">1.8 Kg</SelectItem>
+                  <SelectItem value="3">3 Kg</SelectItem>
+                  <SelectItem value="3.6">3.6 Kg</SelectItem>
+                  <SelectItem value="4">4 Kg</SelectItem>
+                  <SelectItem value="5">5 Kg</SelectItem>
+                  <SelectItem value="7">7 Kg</SelectItem>
+                  <SelectItem value="7.5">7.5 Kg</SelectItem>
+                  <SelectItem value="10">10 Kg</SelectItem>
+                  <SelectItem value="15">15 Kg</SelectItem>
+                  <SelectItem value="20">20 Kg</SelectItem>
+                  <SelectItem value="25">25 Kg</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={filterTamaño} onValueChange={setFilterTamaño}>
+                <SelectTrigger className="w-36">
+                  <SelectValue placeholder="Tamaño" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="Pequeño">Pequeño</SelectItem>
+                  <SelectItem value="Mediano">Mediano</SelectItem>
+                  <SelectItem value="Adulto">Adulto</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>
@@ -2220,9 +2346,13 @@ export const ProductosSection = React.memo(({
               <SelectContent>
                 <SelectItem value="none">Sin especificar</SelectItem>
                 <SelectItem value="1">1 Kg</SelectItem>
+                <SelectItem value="1.8">1.8 Kg</SelectItem>
                 <SelectItem value="3">3 Kg</SelectItem>
+                <SelectItem value="3.6">3.6 Kg</SelectItem>
+                <SelectItem value="4">4 Kg</SelectItem>
                 <SelectItem value="5">5 Kg</SelectItem>
                 <SelectItem value="7">7 Kg</SelectItem>
+                <SelectItem value="7.5">7.5 Kg</SelectItem>
                 <SelectItem value="10">10 Kg</SelectItem>
                 <SelectItem value="15">15 Kg</SelectItem>
                 <SelectItem value="20">20 Kg</SelectItem>
@@ -2301,6 +2431,76 @@ export const ProductosSection = React.memo(({
             disabled={isAssigning || !selectedTamaño || selectedTamaño === "none"}
           >
             {isAssigning ? "Asignando..." : "Asignar"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+
+    {/* Diálogo para aumentar precio */}
+    <Dialog open={isAdjustPriceDialogOpen} onOpenChange={setIsAdjustPriceDialogOpen}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Aumentar Precio de Productos Seleccionados</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">
+            Se aumentará el precio de {selectedProducts.size} producto(s)
+          </p>
+
+          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+            <p className="text-sm text-green-800">
+              <strong>Ejemplos de aumento:</strong>
+            </p>
+            <ul className="text-sm text-green-700 mt-1 space-y-1">
+              <li>• Ingresa <strong>10</strong> para aumentar precios en 10%</li>
+              <li>• Ingresa <strong>5.5</strong> para aumentar precios en 5.5%</li>
+              <li>• Ingresa <strong>20</strong> para aumentar precios en 20%</li>
+            </ul>
+          </div>
+
+          <div>
+            <Label htmlFor="price-adjustment">Porcentaje de Aumento (%)</Label>
+            <Input
+              id="price-adjustment"
+              type="number"
+              step="0.1"
+              min="0.01"
+              value={priceAdjustmentPercentage}
+              onChange={(e) => setPriceAdjustmentPercentage(e.target.value)}
+              placeholder="Ej: 10 para aumentar 10%"
+              disabled={isAssigning}
+              className="mt-1"
+            />
+            {priceAdjustmentPercentage && !isNaN(parseFloat(priceAdjustmentPercentage)) && parseFloat(priceAdjustmentPercentage) > 0 && (
+              <p className="text-xs text-green-600 mt-2">
+                ✓ Los precios aumentarán en {parseFloat(priceAdjustmentPercentage)}%
+              </p>
+            )}
+            {priceAdjustmentPercentage && parseFloat(priceAdjustmentPercentage) <= 0 && (
+              <p className="text-xs text-red-600 mt-2">
+                ✗ El porcentaje debe ser mayor a 0
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="flex justify-end space-x-2 pt-4">
+          <Button
+            variant="outline"
+            onClick={() => {
+              setIsAdjustPriceDialogOpen(false)
+              setPriceAdjustmentPercentage("")
+            }}
+            disabled={isAssigning}
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleAdjustPrice}
+            disabled={isAssigning || !priceAdjustmentPercentage || parseFloat(priceAdjustmentPercentage) <= 0}
+          >
+            {isAssigning ? "Aumentando..." : "Aumentar Precios"}
           </Button>
         </div>
       </DialogContent>

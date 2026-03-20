@@ -142,7 +142,7 @@ COMMENT ON COLUMN public.productos.descuento_porcentual IS 'Porcentaje de descue
 COMMENT ON COLUMN public.productos.precio_oferta IS 'Precio especial de oferta. Si está presente, se usa en lugar del precio normal durante la vigencia.';
 COMMENT ON COLUMN public.productos.fecha_vigencia_desde IS 'Fecha y hora desde cuando el descuento/oferta es válido. NULL significa sin límite de inicio.';
 COMMENT ON COLUMN public.productos.fecha_vigencia_hasta IS 'Fecha y hora hasta cuando el descuento/oferta es válido. NULL significa sin límite de fin.';
-COMMENT ON COLUMN public.productos.kilos IS 'Peso del producto en kilogramos (1, 3, 5, 7, 10, 15, 20, 25)';
+COMMENT ON COLUMN public.productos.kilos IS 'Peso del producto en kilogramos (1, 1.8, 3, 3.6, 4, 5, 7, 7.5, 10, 15, 20, 25)';
 COMMENT ON COLUMN public.productos.tamaño IS 'Tamaño del producto (Pequeño, Mediano, Adulto)';
 
 -- ----------------------------------------------------------------------------
@@ -333,7 +333,9 @@ CREATE TABLE public.configuracion_web (
     -- Banners del home
     banner_1 text null,
     banner_2 text null,
-    banner_3 text null
+    banner_3 text null,
+    banner_4 text null,
+    banner_5 text null
 );
 
 COMMENT ON TABLE configuracion_web IS 'Configuración visual para la aplicación web';
@@ -350,6 +352,8 @@ COMMENT ON COLUMN configuracion_web.combos_subtitulo IS 'Subtítulo opcional par
 COMMENT ON COLUMN configuracion_web.banner_1 IS 'URL o path de la primera imagen de banner para el home';
 COMMENT ON COLUMN configuracion_web.banner_2 IS 'URL o path de la segunda imagen de banner para el home';
 COMMENT ON COLUMN configuracion_web.banner_3 IS 'URL o path de la tercera imagen de banner para el home';
+COMMENT ON COLUMN configuracion_web.banner_4 IS 'URL o path de la cuarta imagen de banner para el home';
+COMMENT ON COLUMN configuracion_web.banner_5 IS 'URL o path de la quinta imagen de banner para el home';
 
 -- ============================================================================
 -- 4. SISTEMA DE COMBOS

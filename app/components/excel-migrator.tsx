@@ -485,16 +485,37 @@ export const ExcelMigrator = ({ productos, categorias, marcas, lineas, onProduct
               continue
             }
 
+            // Buscar o crear marca del Excel
+            const marcaId = await findOrCreateMarca(productoData.marca)
+            if (!marcaId) {
+              console.error(`❌ No se pudo obtener/crear marca "${productoData.marca}" para producto ${productoData.codigo}`)
+              results.push({
+                row: rowNumber,
+                descripcion: productoData.descripcion,
+                codigo: productoData.codigo,
+                status: 'error',
+                message: `Error al obtener/crear marca "${productoData.marca}"`,
+                data: productoData
+              })
+              setProgress((i + 1) / totalRows * 100)
+              continue
+            }
+
             const categoriaActual = productoExistente.fk_id_categoria
             const categoriaNueva = categoriaId
+            const marcaActual = productoExistente.fk_id_marca
+            const marcaNueva = marcaId
 
             console.log(`🔍 Debug producto ${productoData.codigo}:`)
             console.log(`  - Categoría actual: ${categoriaActual} (${categorias.find(c => c.id === categoriaActual)?.descripcion || 'Sin categoría'})`)
             console.log(`  - Categoría nueva: ${categoriaNueva} (${categorias.find(c => c.id === categoriaNueva)?.descripcion || productoData.categoria})`)
+            console.log(`  - Marca actual: ${marcaActual} (${marcas.find(m => m.id === marcaActual)?.descripcion || 'Sin marca'})`)
+            console.log(`  - Marca nueva: ${marcaNueva} (${marcas.find(m => m.id === marcaNueva)?.descripcion || productoData.marca})`)
 
             const descripcionDiferente = descripcionActual.toLowerCase() !== descripcionNueva.toLowerCase()
             const precioDiferente = Math.abs(precioActual - precioNuevo) > 0.01 // Comparar con tolerancia para decimales
             const categoriaDiferente = categoriaActual !== categoriaNueva
+            const marcaDiferente = marcaActual !== marcaNueva
 
             // Comparar campos de promoción
             const precioOfertaActual = (productoExistente as any).precio_oferta
@@ -522,6 +543,7 @@ export const ExcelMigrator = ({ productos, categorias, marcas, lineas, onProduct
             console.log(`  - Descripción diferente: ${descripcionDiferente}`)
             console.log(`  - Precio diferente: ${precioDiferente}`)
             console.log(`  - Categoría diferente: ${categoriaDiferente}`)
+            console.log(`  - Marca diferente: ${marcaDiferente}`)
             console.log(`  - Precio oferta diferente: ${precioOfertaDiferente}`)
             console.log(`  - Descuento diferente: ${descuentoDiferente}`)
             console.log(`  - Fecha desde diferente: ${fechaDesdeDiferente}`)
@@ -529,7 +551,7 @@ export const ExcelMigrator = ({ productos, categorias, marcas, lineas, onProduct
             console.log(`  - Kilos diferente: ${kilosDiferente}`)
             console.log(`  - Tamaño diferente: ${tamañoDiferente}`)
 
-            if (!descripcionDiferente && !precioDiferente && !categoriaDiferente &&
+            if (!descripcionDiferente && !precioDiferente && !categoriaDiferente && !marcaDiferente &&
                 !precioOfertaDiferente && !descuentoDiferente && !fechaDesdeDiferente && !fechaHastaDiferente &&
                 !kilosDiferente && !tamañoDiferente) {
               // Ningún campo es diferente, no hacer nada
@@ -565,6 +587,14 @@ export const ExcelMigrator = ({ productos, categorias, marcas, lineas, onProduct
                   const categoriaNuevaNombre = categorias.find(c => c.id === categoriaNueva)?.descripcion || productoData.categoria
                   cambios.push(`categoría: "${categoriaActualNombre}" → "${categoriaNuevaNombre}"`)
                   console.log(`🔄 Actualizando categoría: "${categoriaActualNombre}" → "${categoriaNuevaNombre}"`)
+                }
+
+                if (marcaDiferente) {
+                  camposAActualizar.fk_id_marca = marcaNueva
+                  const marcaActualNombre = marcas.find(m => m.id === marcaActual)?.descripcion || 'Sin marca'
+                  const marcaNuevaNombre = marcas.find(m => m.id === marcaNueva)?.descripcion || productoData.marca
+                  cambios.push(`marca: "${marcaActualNombre}" → "${marcaNuevaNombre}"`)
+                  console.log(`🔄 Actualizando marca: "${marcaActualNombre}" → "${marcaNuevaNombre}"`)
                 }
 
                 // Actualizar campos de promoción
@@ -811,7 +841,7 @@ export const ExcelMigrator = ({ productos, categorias, marcas, lineas, onProduct
             <ul className="text-sm text-blue-700 space-y-1">
               <li>• <strong>Columnas requeridas:</strong> descripción, precio, código, categoría, marca, línea, aplica_todos_plan</li>
               <li>• <strong>Columnas opcionales de promoción:</strong> descuento_porcentual, precio_oferta, fecha_vigencia_desde, fecha_vigencia_hasta</li>
-              <li>• <strong>Columnas opcionales de producto:</strong> Kilos (1, 3, 5, 7, 10, 15, 20, 25), Tamaño (Pequeño, Mediano, Adulto)</li>
+              <li>• <strong>Columnas opcionales de producto:</strong> Kilos (1, 1.8, 3, 3.6, 4, 5, 7, 7.5, 10, 15, 20, 25), Tamaño (Pequeño, Mediano, Adulto)</li>
               <li>• <strong>Nombres alternativos aceptados:</strong></li>
               <li>&nbsp;&nbsp;- Descripción: "descripcion" o "Desc. artículo"</li>
               <li>&nbsp;&nbsp;- Código: "codigo" o "Artículo"</li>
@@ -825,9 +855,8 @@ export const ExcelMigrator = ({ productos, categorias, marcas, lineas, onProduct
               <li>• <strong>Búsqueda inteligente:</strong> Primero busca por código, luego por descripción</li>
               <li>• <strong>Si encuentra por código:</strong>
                 <ul className="ml-4 mt-1">
-                  <li>- Si la descripción o precio son diferentes: Actualiza SOLO descripción y/o precio</li>
-                  <li>- Si descripción y precio son iguales: Se omite (sin cambios)</li>
-                  <li>- <em>Otros campos (marca, categoría, etc.) NO se modifican</em></li>
+                  <li>- Actualiza campos si son diferentes: descripción, precio, categoría, marca, kilos, tamaño, promociones</li>
+                  <li>- Si todos los campos son iguales: Se omite (sin cambios)</li>
                 </ul>
               </li>
               <li>• <strong>Si encuentra por descripción:</strong> Se omite (ya existe)</li>

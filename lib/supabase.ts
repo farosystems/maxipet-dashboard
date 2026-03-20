@@ -229,4 +229,6 @@ export interface ConfiguracionWeb {
   banner_1?: string
   banner_2?: string
   banner_3?: string
+  banner_4?: string
+  banner_5?: string
 } 

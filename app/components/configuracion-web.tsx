@@ -71,7 +71,9 @@ export function ConfiguracionWebComponent({
     // Banners
     banner_1: configuracionWeb?.banner_1 || "",
     banner_2: configuracionWeb?.banner_2 || "",
-    banner_3: configuracionWeb?.banner_3 || ""
+    banner_3: configuracionWeb?.banner_3 || "",
+    banner_4: configuracionWeb?.banner_4 || "",
+    banner_5: configuracionWeb?.banner_5 || ""
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -123,11 +125,13 @@ export function ConfiguracionWebComponent({
       titulo_seccion_destacados: "Productos Destacados",
       banner_1: "",
       banner_2: "",
-      banner_3: ""
+      banner_3: "",
+      banner_4: "",
+      banner_5: ""
     })
   }
 
-  const handleImageUpload = async (field: 'banner_1' | 'banner_2' | 'banner_3' | 'logo_url', file: File) => {
+  const handleImageUpload = async (field: 'banner_1' | 'banner_2' | 'banner_3' | 'banner_4' | 'banner_5' | 'logo_url', file: File) => {
     try {
       setIsLoading(true)
 
@@ -589,7 +593,7 @@ export function ConfiguracionWebComponent({
                     <h3 className="text-lg font-semibold">Banners del Home</h3>
                   </div>
                   <p className="text-sm text-gray-600">
-                    Configura hasta 3 banners para mostrar en el carrusel principal del home
+                    Configura hasta 5 banners para mostrar en el carrusel principal del home
                   </p>
 
                   {/* Banner 1 */}
@@ -768,6 +772,130 @@ export function ConfiguracionWebComponent({
                           <img
                             src={formData.banner_3}
                             alt="Vista previa Banner 3"
+                            className="w-full h-full object-contain"
+                            onError={(e) => {
+                              e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23ddd" width="100" height="100"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="monospace" font-size="12" fill="%23999"%3EError al cargar%3C/text%3E%3C/svg%3E'
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Banner 4 */}
+                  <div className="space-y-3 border rounded-lg p-4 bg-gray-50">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="banner_4" className="text-base font-semibold">Banner 4</Label>
+                      {formData.banner_4 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleInputChange('banner_4', '')}
+                        >
+                          <X className="h-4 w-4 mr-1" />
+                          Eliminar
+                        </Button>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="banner_4_url">URL de la imagen</Label>
+                      <Input
+                        id="banner_4_url"
+                        value={formData.banner_4}
+                        onChange={(e) => handleInputChange('banner_4', e.target.value)}
+                        placeholder="https://ejemplo.com/banner4.jpg o subir desde PC"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="banner_4_file">O subir imagen desde PC</Label>
+                      <Input
+                        id="banner_4_file"
+                        type="file"
+                        accept="image/*"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0]
+                          if (file) {
+                            await handleImageUpload('banner_4', file)
+                            // Reset the input after upload
+                            e.target.value = ''
+                          }
+                        }}
+                      />
+                      <p className="text-xs text-gray-500">Formatos: JPG, PNG, GIF, WEBP (Máx. 5MB)</p>
+                    </div>
+
+                    {formData.banner_4 && (
+                      <div className="mt-3">
+                        <Label className="text-sm text-gray-600 mb-2 block">Vista previa:</Label>
+                        <div className="relative w-full h-48 border rounded-lg overflow-hidden bg-white">
+                          <img
+                            src={formData.banner_4}
+                            alt="Vista previa Banner 4"
+                            className="w-full h-full object-contain"
+                            onError={(e) => {
+                              e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23ddd" width="100" height="100"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="monospace" font-size="12" fill="%23999"%3EError al cargar%3C/text%3E%3C/svg%3E'
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Banner 5 */}
+                  <div className="space-y-3 border rounded-lg p-4 bg-gray-50">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="banner_5" className="text-base font-semibold">Banner 5</Label>
+                      {formData.banner_5 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleInputChange('banner_5', '')}
+                        >
+                          <X className="h-4 w-4 mr-1" />
+                          Eliminar
+                        </Button>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="banner_5_url">URL de la imagen</Label>
+                      <Input
+                        id="banner_5_url"
+                        value={formData.banner_5}
+                        onChange={(e) => handleInputChange('banner_5', e.target.value)}
+                        placeholder="https://ejemplo.com/banner5.jpg o subir desde PC"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="banner_5_file">O subir imagen desde PC</Label>
+                      <Input
+                        id="banner_5_file"
+                        type="file"
+                        accept="image/*"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0]
+                          if (file) {
+                            await handleImageUpload('banner_5', file)
+                            // Reset the input after upload
+                            e.target.value = ''
+                          }
+                        }}
+                      />
+                      <p className="text-xs text-gray-500">Formatos: JPG, PNG, GIF, WEBP (Máx. 5MB)</p>
+                    </div>
+
+                    {formData.banner_5 && (
+                      <div className="mt-3">
+                        <Label className="text-sm text-gray-600 mb-2 block">Vista previa:</Label>
+                        <div className="relative w-full h-48 border rounded-lg overflow-hidden bg-white">
+                          <img
+                            src={formData.banner_5}
+                            alt="Vista previa Banner 5"
                             className="w-full h-full object-contain"
                             onError={(e) => {
                               e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23ddd" width="100" height="100"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="monospace" font-size="12" fill="%23999"%3EError al cargar%3C/text%3E%3C/svg%3E'

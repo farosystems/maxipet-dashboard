@@ -21,7 +21,7 @@ ADD COLUMN IF NOT EXISTS tamaño varchar(50) NULL;
 -- 2. COMENTARIOS DESCRIPTIVOS
 -- ============================================================================
 
-COMMENT ON COLUMN public.productos.kilos IS 'Peso del producto en kilogramos (1, 3, 5, 7, 15, 20, etc.)';
+COMMENT ON COLUMN public.productos.kilos IS 'Peso del producto en kilogramos (1, 1.8, 3, 3.6, 4, 5, 7, 7.5, 10, 15, 20, 25)';
 COMMENT ON COLUMN public.productos.tamaño IS 'Tamaño del producto (Pequeño, Mediano, Adulto)';
 
 -- ============================================================================
