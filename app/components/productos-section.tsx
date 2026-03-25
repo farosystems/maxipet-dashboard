@@ -83,9 +83,11 @@ export const ProductosSection = React.memo(({
   const [isExporting, setIsExporting] = useState(false)
   const [isAssignKilosDialogOpen, setIsAssignKilosDialogOpen] = useState(false)
   const [isAssignTamañoDialogOpen, setIsAssignTamañoDialogOpen] = useState(false)
+  const [isAssignCategoriaDialogOpen, setIsAssignCategoriaDialogOpen] = useState(false)
   const [isAdjustPriceDialogOpen, setIsAdjustPriceDialogOpen] = useState(false)
   const [selectedKilos, setSelectedKilos] = useState<string>("")
   const [selectedTamaño, setSelectedTamaño] = useState<string>("")
+  const [selectedCategoria, setSelectedCategoria] = useState<string>("")
   const [priceAdjustmentPercentage, setPriceAdjustmentPercentage] = useState<string>("")
   const [isAssigning, setIsAssigning] = useState(false)
 
@@ -339,6 +341,41 @@ export const ProductosSection = React.memo(({
     } catch (error) {
       console.error('Error asignando tamaño:', error)
       alert('Error al asignar tamaño a los productos')
+    } finally {
+      setIsAssigning(false)
+    }
+  }
+
+  // Función para asignar categoría masivamente
+  const handleAssignCategoria = async () => {
+    if (selectedProducts.size === 0) {
+      alert('Por favor selecciona al menos un producto')
+      return
+    }
+
+    if (!selectedCategoria) {
+      alert('Por favor selecciona una categoría')
+      return
+    }
+
+    setIsAssigning(true)
+    try {
+      const productosAActualizar = Array.from(selectedProducts)
+
+      for (const productoId of productosAActualizar) {
+        await onUpdateProducto(productoId, {
+          fk_id_categoria: parseInt(selectedCategoria)
+        })
+      }
+
+      const categoriaNombre = categorias.find(c => c.id.toString() === selectedCategoria)?.descripcion || 'desconocida'
+      alert(`Categoría "${categoriaNombre}" asignada correctamente a ${productosAActualizar.length} producto(s)`)
+      setIsAssignCategoriaDialogOpen(false)
+      setSelectedCategoria("")
+      setSelectedProducts(new Set())
+    } catch (error) {
+      console.error('Error asignando categoría:', error)
+      alert('Error al asignar categoría a los productos')
     } finally {
       setIsAssigning(false)
     }
@@ -1000,6 +1037,14 @@ export const ProductosSection = React.memo(({
           </div>
               {selectedProducts.size > 0 && (
                 <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsAssignCategoriaDialogOpen(true)}
+                    className="bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-300"
+                  >
+                    Asignar Categoría ({selectedProducts.size})
+                  </Button>
                   <Button
                     variant="outline"
                     size="sm"
@@ -2429,6 +2474,60 @@ export const ProductosSection = React.memo(({
           <Button
             onClick={handleAssignTamaño}
             disabled={isAssigning || !selectedTamaño || selectedTamaño === "none"}
+          >
+            {isAssigning ? "Asignando..." : "Asignar"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+
+    {/* Diálogo para asignar categoría */}
+    <Dialog open={isAssignCategoriaDialogOpen} onOpenChange={setIsAssignCategoriaDialogOpen}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Asignar Categoría a Productos Seleccionados</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">
+            Se asignará la categoría seleccionada a {selectedProducts.size} producto(s)
+          </p>
+
+          <div>
+            <Label htmlFor="assign-categoria">Seleccionar Categoría</Label>
+            <Select
+              value={selectedCategoria}
+              onValueChange={setSelectedCategoria}
+              disabled={isAssigning}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar categoría" />
+              </SelectTrigger>
+              <SelectContent>
+                {categorias.map((categoria) => (
+                  <SelectItem key={categoria.id} value={categoria.id.toString()}>
+                    {categoria.descripcion}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="flex justify-end space-x-2 pt-4">
+          <Button
+            variant="outline"
+            onClick={() => {
+              setIsAssignCategoriaDialogOpen(false)
+              setSelectedCategoria("")
+            }}
+            disabled={isAssigning}
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleAssignCategoria}
+            disabled={isAssigning || !selectedCategoria}
           >
             {isAssigning ? "Asignando..." : "Asignar"}
           </Button>
