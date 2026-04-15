@@ -67,6 +67,7 @@ export const ProductosSection = React.memo(({
     destacado: false,
     activo: true,
     tiene_stock: true,
+    bonus: false,
     aplica_todos_plan: false,
     aplica_solo_categoria: false,
     aplica_plan_especial: false,
@@ -703,6 +704,7 @@ export const ProductosSection = React.memo(({
       destacado: false,
       activo: true,
       tiene_stock: true,
+      bonus: false,
       aplica_todos_plan: false,
       aplica_solo_categoria: false,
       aplica_plan_especial: false,
@@ -741,6 +743,7 @@ export const ProductosSection = React.memo(({
       destacado: producto.destacado || false,
       activo: producto.activo ?? true,
       tiene_stock: producto.tiene_stock ?? true,
+      bonus: producto.bonus ?? false,
       aplica_todos_plan: producto.aplica_todos_plan || false,
       aplica_solo_categoria: producto.aplica_solo_categoria || false,
       aplica_plan_especial: producto.aplica_plan_especial || false,
@@ -826,6 +829,7 @@ export const ProductosSection = React.memo(({
         destacado: formData.destacado,
         activo: formData.activo,
         tiene_stock: formData.tiene_stock,
+        bonus: formData.bonus,
         aplica_todos_plan: formData.aplica_todos_plan,
         aplica_solo_categoria: formData.aplica_solo_categoria,
         aplica_plan_especial: formData.aplica_plan_especial,
@@ -1787,6 +1791,15 @@ export const ProductosSection = React.memo(({
                             />
                             <Label htmlFor="tiene_stock">Tiene Stock</Label>
                           </div>
+                          <div className="flex items-center space-x-2">
+                            <Switch
+                              id="bonus"
+                              checked={formData.bonus}
+                              onCheckedChange={(checked) => setFormData({ ...formData, bonus: checked })}
+                              disabled={isCreating}
+                            />
+                            <Label htmlFor="bonus">Bonus</Label>
+                          </div>
                   <div className="flex items-center space-x-2">
                     <Switch
                       id="aplica_todos_plan"
@@ -1973,6 +1986,7 @@ export const ProductosSection = React.memo(({
               <TableHead>Destacado</TableHead>
                     <TableHead>Activo</TableHead>
               <TableHead>Stock</TableHead>
+              <TableHead>Bonus</TableHead>
               <TableHead>Aplica Planes</TableHead>
               <TableHead>Acciones</TableHead>
             </TableRow>
@@ -2119,6 +2133,18 @@ export const ProductosSection = React.memo(({
                               await onUpdateProducto(producto.id, { tiene_stock: checked })
                             } catch (error) {
                               console.error('Error al actualizar stock:', error)
+                            }
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Switch
+                          checked={producto.bonus ?? false}
+                          onCheckedChange={async (checked) => {
+                            try {
+                              await onUpdateProducto(producto.id, { bonus: checked })
+                            } catch (error) {
+                              console.error('Error al actualizar bonus:', error)
                             }
                           }}
                         />
@@ -2295,7 +2321,20 @@ export const ProductosSection = React.memo(({
                         }}
                       />
                     </div>
-                    
+                    <div className="flex items-center justify-between pt-1">
+                      <span className="text-xs text-gray-600">Bonus:</span>
+                      <Switch
+                        checked={producto.bonus ?? false}
+                        onCheckedChange={async (checked) => {
+                          try {
+                            await onUpdateProducto(producto.id, { bonus: checked })
+                          } catch (error) {
+                            console.error('Error al actualizar bonus:', error)
+                          }
+                        }}
+                      />
+                    </div>
+
                     <div className="flex gap-1 pt-2">
                       <Button 
                         variant="outline" 

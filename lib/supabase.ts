@@ -45,6 +45,7 @@ export interface Producto {
   destacado?: boolean
   activo?: boolean
   tiene_stock?: boolean
+  bonus?: boolean
   aplica_todos_plan?: boolean
   aplica_solo_categoria?: boolean
   aplica_plan_especial?: boolean
