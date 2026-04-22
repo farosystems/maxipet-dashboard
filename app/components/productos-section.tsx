@@ -1192,7 +1192,9 @@ export const ProductosSection = React.memo(({
                     <SelectContent>
                       <SelectItem value="none">Sin especificar</SelectItem>
                       <SelectItem value="1">1 Kg</SelectItem>
+                      <SelectItem value="1.5">1.5 Kg</SelectItem>
                       <SelectItem value="1.8">1.8 Kg</SelectItem>
+                      <SelectItem value="2">2 Kg</SelectItem>
                       <SelectItem value="3">3 Kg</SelectItem>
                       <SelectItem value="3.6">3.6 Kg</SelectItem>
                       <SelectItem value="4">4 Kg</SelectItem>
@@ -1200,6 +1202,7 @@ export const ProductosSection = React.memo(({
                       <SelectItem value="7">7 Kg</SelectItem>
                       <SelectItem value="7.5">7.5 Kg</SelectItem>
                       <SelectItem value="10">10 Kg</SelectItem>
+                      <SelectItem value="12">12 Kg</SelectItem>
                       <SelectItem value="15">15 Kg</SelectItem>
                       <SelectItem value="20">20 Kg</SelectItem>
                       <SelectItem value="25">25 Kg</SelectItem>
@@ -1220,6 +1223,7 @@ export const ProductosSection = React.memo(({
                       <SelectItem value="none">Sin especificar</SelectItem>
                       <SelectItem value="Pequeño">Pequeño</SelectItem>
                       <SelectItem value="Mediano">Mediano</SelectItem>
+                      <SelectItem value="Grande">Grande</SelectItem>
                       <SelectItem value="Adulto">Adulto</SelectItem>
                     </SelectContent>
                   </Select>
@@ -2430,7 +2434,9 @@ export const ProductosSection = React.memo(({
               <SelectContent>
                 <SelectItem value="none">Sin especificar</SelectItem>
                 <SelectItem value="1">1 Kg</SelectItem>
+                <SelectItem value="1.5">1.5 Kg</SelectItem>
                 <SelectItem value="1.8">1.8 Kg</SelectItem>
+                <SelectItem value="2">2 Kg</SelectItem>
                 <SelectItem value="3">3 Kg</SelectItem>
                 <SelectItem value="3.6">3.6 Kg</SelectItem>
                 <SelectItem value="4">4 Kg</SelectItem>
@@ -2438,6 +2444,7 @@ export const ProductosSection = React.memo(({
                 <SelectItem value="7">7 Kg</SelectItem>
                 <SelectItem value="7.5">7.5 Kg</SelectItem>
                 <SelectItem value="10">10 Kg</SelectItem>
+                <SelectItem value="12">12 Kg</SelectItem>
                 <SelectItem value="15">15 Kg</SelectItem>
                 <SelectItem value="20">20 Kg</SelectItem>
                 <SelectItem value="25">25 Kg</SelectItem>
@@ -2493,6 +2500,7 @@ export const ProductosSection = React.memo(({
                 <SelectItem value="none">Sin especificar</SelectItem>
                 <SelectItem value="Pequeño">Pequeño</SelectItem>
                 <SelectItem value="Mediano">Mediano</SelectItem>
+                <SelectItem value="Grande">Grande</SelectItem>
                 <SelectItem value="Adulto">Adulto</SelectItem>
               </SelectContent>
             </Select>
